@@ -6,9 +6,11 @@ import threading
 from pydub import AudioSegment
 from pydub.playback import play
 from freesound import FreesoundClient
-from settings import FS_API_KEY, PORT
 
 DATA_DIR = os.path.join(os.getcwd(), 'audio')
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+
 fs_client = FreesoundClient()
 api_key = os.getenv('FS_API_KEY', None)
 if api_key is None:
