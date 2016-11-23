@@ -88,6 +88,9 @@ def docs():
             <br>NOTE: this endpoint has nothing to do with Freesound but it is fun
         </li>
     </ul>
+    <p>
+    Contribute to the server here: <a href="https://github.com/ffont/freesound-remote-player">https://github.com/ffont/freesound-remote-player</a>
+    </p>
     """
 
 if __name__ == "__main__":
