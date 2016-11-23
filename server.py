@@ -68,6 +68,27 @@ def render_text():
     t.start()
     return jsonify({'playing': True, 'text': text})
 
+@app.route("/")
+def docs():
+    return """
+    <h1>Freesound Remote Player API docs</h1>
+    Hi, this is what you can do:
+    <ul>
+        <li style="margin-bottom: 10px;">
+            <b>/</b>: This is where you are
+        </li>
+        <li style="margin-bottom: 10px;">
+            <b>/play</b>: play a sound from Freesound.
+            <br>Specify the tags that the sound must have using the 'tags' request parameter and separating the tags
+            with commas (e.g. '?tags=hello,speech').
+        </li>
+        <li style="margin-bottom: 10px;">
+            <b>/voice</b>: call the system's command 'say' to <i>say</i> whatever you want.
+            <br>User the request parameter `text` to spacify the text to be said (e.g. `?text="this is really stupid"`)
+            <br>NOTE: this endpoint has nothing to do with Freesound but it is fun
+        </li>
+    </ul>
+    """
 
 if __name__ == "__main__":
     app.run(debug=True, port=int(os.getenv('PORT', 3333)))
