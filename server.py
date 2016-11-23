@@ -2,14 +2,33 @@ from flask import Flask, request, jsonify
 import urllib2
 import os
 import random
-import threading
+import multiprocessing
+import subprocess
+import pydub
 from pydub import AudioSegment
 from pydub.playback import play
+from pydub.utils import get_player_name
+import tempfile
 from freesound import FreesoundClient
 
 DATA_DIR = os.path.join(os.getcwd(), 'audio')
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
+
+
+running_voice_processes = list()
+running_sound_processes = list()
+
+
+# monkeypath pydub's _play_with_ffplay so we can store process objects
+# Without that we could not stop processes when calling panic
+def _my_play_with_ffplay(seg):
+    tmp = tempfile.NamedTemporaryFile("w+b", suffix=".wav", delete=False)
+    seg.export(tmp.name, "wav")
+    proc = subprocess.Popen([get_player_name(), "-nodisp", "-autoexit", tmp.name])
+    running_sound_processes.append(proc)
+pydub.playback._play_with_ffplay = _my_play_with_ffplay
+
 
 fs_client = FreesoundClient()
 api_key = os.getenv('FS_API_KEY', None)
@@ -39,13 +58,12 @@ def search_from_tags(tags):
         return s['previews']['preview-hq-ogg']
     return None
 
-def play_file(path, threaded=True):
+def play_file(path):
     song = AudioSegment.from_ogg(path)
-    if threaded:
-        t = threading.Thread(target=play, args=(song,), kwargs={})
-        t.start()
-    else:
-        play(song)
+    play(song)
+    #p = multiprocessing.Process(target=play, args=(song,), kwargs={})
+    #running_sound_processes.append(p)
+    #p.start()
 
 @app.route("/play")
 def play_from_freesound():
@@ -61,11 +79,9 @@ def play_from_freesound():
 # The following endpoint has nothing to do with Freesound but it is fun ;)
 @app.route("/voice")
 def render_text():
-    def run_say(text):
-        os.system("say %s" % text)
     text = request.args.get('text', None)
-    t = threading.Thread(target=run_say, args=(text,), kwargs={})
-    t.start()
+    proc = subprocess.Popen(["say"] + text.split(' '))
+    running_voice_processes.append(proc)
     return jsonify({'playing': True, 'text': text})
 
 @app.route("/")
@@ -87,11 +103,31 @@ def docs():
             <br>User the request parameter `text` to spacify the text to be said (e.g. `?text="this is really stupid"`)
             <br>NOTE: this endpoint has nothing to do with Freesound but it is fun
         </li>
+        <li style="margin-bottom: 10px;">
+            <b>/panic</b>: Stop all sounds being played
+        </li>
     </ul>
     <p>
     Contribute to the server here: <a href="https://github.com/ffont/freesound-remote-player">https://github.com/ffont/freesound-remote-player</a>
     </p>
     """
+
+@app.route("/panic")
+def panic():
+    global running_voice_processes
+    global running_sound_processes
+    for p in running_voice_processes:
+        p.kill()
+    for p in running_sound_processes:
+        p.kill()
+    response = {
+        'n_voice_processes_killed': len(running_voice_processes),
+        'n_sound_processes_killed': len(running_sound_processes)
+    }
+    running_voice_processes = list()
+    running_sound_processes = list()
+    return jsonify(response)
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 3333)))
