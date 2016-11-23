@@ -58,5 +58,16 @@ def play_from_freesound():
             return jsonify({'playing': True, 'url': url})
     return jsonify({'playing': False})
 
+# The following endpoint has nothing to do with Freesound but it is fun ;)
+@app.route("/voice")
+def render_text():
+    def run_say(text):
+        os.system("say %s" % text)
+    text = request.args.get('text', None)
+    t = threading.Thread(target=run_say, args=(text,), kwargs={})
+    t.start()
+    return jsonify({'playing': True, 'text': text})
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=int(os.getenv('PORT', 3333)))
