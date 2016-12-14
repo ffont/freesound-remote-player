@@ -58,6 +58,15 @@ def search_from_tags(tags):
         return s['previews']['preview-hq-ogg']
     return None
 
+def search_from_id(fsid):
+    id_filter = 'id:%s' % fsid
+    results_pager = fs_client.text_search(filter=id_filter,fields="id,previews")
+    if results_pager.results:
+        # Should only have one result...
+        s = random.choice(results_pager.results)
+        return s['previews']['preview-hq-ogg']
+    return None
+
 def play_file(path):
     song = AudioSegment.from_ogg(path)
     play(song)
@@ -74,6 +83,14 @@ def play_from_freesound():
             path = download_file(url)
             play_file(path)
             return jsonify({'playing': True, 'url': url})
+    fsid = request.args.get('fsid', None)
+    if fsid is not None:
+        url = search_from_id(fsid)
+        if url is not None:
+            path = download_file(url)
+            play_file(path)
+            return jsonify({'playing': True, 'url': url})
+
     return jsonify({'playing': False})
 
 # The following endpoint has nothing to do with Freesound but it is fun ;)
@@ -97,6 +114,7 @@ def docs():
             <b>/play</b>: play a sound from Freesound.
             <br>Specify the tags that the sound must have using the 'tags' request parameter and separating the tags
             with commas (e.g. '?tags=hello,speech').
+            <br>Alternatively specify the id of the sound with the 'id' request parameter (e.g. '?id=1234').
         </li>
         <li style="margin-bottom: 10px;">
             <b>/voice</b>: call the system's command 'say' to <i>say</i> whatever you want.
