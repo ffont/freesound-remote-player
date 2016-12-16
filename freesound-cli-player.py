@@ -29,6 +29,8 @@ parser.add_option("-H", "--host", dest="host",
                   help="Host of the remote server, defaults to %s" % DEFAULT_HOST, default=DEFAULT_HOST)
 parser.add_option("-P", "--port", dest="port",
                   help="Port of the remote server, defaults to %s" % DEFAULT_PORT, default=DEFAULT_PORT)
+parser.add_option("-v", "--voice", dest="voice",
+                  help="Voice to be used when running the 'read' command. See https://github.com/ffont/freesound-remote-player/issues/1 for a list of available voices.")
 
 if __name__ == "__main__":
     (options, args) = parser.parse_args()
@@ -67,6 +69,10 @@ if __name__ == "__main__":
 
     def run_read(arguments):
         url = base_url + 'voice?text="%s"' % ' '.join(arguments)
+        voice = options.voice
+        if voice:
+            url += '&voice=%s' % voice
+        print url
         send_request(url)
 
     available_commands = [element.replace('run_', '') for element in dir() if element.startswith('run_')]

@@ -97,9 +97,10 @@ def play_from_freesound():
 @app.route("/voice")
 def render_text():
     text = request.args.get('text', None)
-    proc = subprocess.Popen(["say"] + text.split(' '))
+    voice = request.args.get('voice', 'Fred')
+    proc = subprocess.Popen(["say", "-v", voice] + text.split(' '))
     running_voice_processes.append(proc)
-    return jsonify({'playing': True, 'text': text})
+    return jsonify({'playing': True, 'text': text, 'voice': voice})
 
 @app.route("/")
 def docs():
@@ -118,7 +119,9 @@ def docs():
         </li>
         <li style="margin-bottom: 10px;">
             <b>/voice</b>: call the system's command 'say' to <i>say</i> whatever you want.
-            <br>User the request parameter `text` to spacify the text to be said (e.g. `?text="this is really stupid"`)
+            <br>Use the request parameter `text` to specify the text to be said (e.g. `?text="this is really stupid"`)
+            <br>Use the request parameter `voice` to specify a voice to be used to read the text (e.g. `?voice="Agnes"`).
+            List of <a href="https://github.com/ffont/freesound-remote-player/issues/1">available voices</a>.
             <br>NOTE: this endpoint has nothing to do with Freesound but it is fun
         </li>
         <li style="margin-bottom: 10px;">
