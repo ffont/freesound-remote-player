@@ -69,6 +69,8 @@ def search_from_id(fsid):
 
 def play_file(path):
     song = AudioSegment.from_ogg(path)
+    attenuate_db = 8  # Reduce the volume of the file 8dB (apparently that's the easier way to do it in pydub)
+    song = song - attenuate_db
     play(song)
     #p = multiprocessing.Process(target=play, args=(song,), kwargs={})
     #running_sound_processes.append(p)
